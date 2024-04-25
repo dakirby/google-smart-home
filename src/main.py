@@ -3,7 +3,16 @@ from scripts import debug
 
 
 def main(args):
+    from device_modules.identity_manager import IdentityManager
+    from pathlib import Path
+
+    credential_json_path = Path(__file__).parent / "credentials.json"
+    user_identity = IdentityManager.google_oauth2_login(
+        credential_json_path=credential_json_path
+    )
+
     pass
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
