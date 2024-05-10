@@ -1,10 +1,12 @@
 from __future__ import annotations
 from pathlib import Path
 from typing import Optional
+import json
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.exceptions import RefreshError
 
 
 class IdentityManager:
@@ -17,6 +19,7 @@ class IdentityManager:
         """
         self.creds = creds
         self.secrets = self._fetch_secrets()
+        self.PROJECT_ID = self._fetch_project_id()
 
     @classmethod
     def google_oauth2_login(
@@ -59,18 +62,32 @@ class IdentityManager:
         if (token_json_path).exists():
             creds = Credentials.from_authorized_user_file(token_json_path)
 
-        if creds is None:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                credential_json_path,
-                ["https://www.googleapis.com/auth/calendar.readonly"],
-            )
-            creds = flow.run_local_server(port=0)
-            # Save the credentials for the next run
-            with open(token_json_path, "w") as f:
-                f.write(creds.to_json())
+        if not creds or (creds and not creds.valid):
+            creds = IdentityManager._login_flow(credential_json_path, token_json_path)
 
-        if not creds.valid:
-            creds.refresh(Request())
+        if creds and creds.expired and creds.refresh_token:
+            try:
+                creds.refresh(Request())
+            except RefreshError:
+                creds = IdentityManager._login_flow(
+                    credential_json_path, token_json_path
+                )
+
+        return creds
+
+    @staticmethod
+    def _login_flow(credential_json_path: Path | str, token_json_path: Path | str):
+        flow = InstalledAppFlow.from_client_secrets_file(
+            credential_json_path,
+            [
+                "https://www.googleapis.com/auth/calendar.readonly",
+                "https://www.googleapis.com/auth/cloud-platform",
+            ],
+        )
+        creds = flow.run_local_server(port=0)
+        # Save the credentials for the next run
+        with open(token_json_path, "w") as f:
+            f.write(creds.to_json())
 
         return creds
 
@@ -78,3 +95,10 @@ class IdentityManager:
         # TODO: check creds and use creds to access secrets and acquire them
         secrets = {"openweather_api_key": "API_KEY"}
         return secrets
+
+    def _fetch_project_id(self):
+        # TODO: check credentials for project id
+        cloudproject_path = Path(__file__).parent.parent / "cloudproject.json"
+        with open(cloudproject_path, "r") as f:
+            data = json.load(f)
+        return data["PROJECT_ID"]
