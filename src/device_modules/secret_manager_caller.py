@@ -1,5 +1,4 @@
 from google.cloud import secretmanager
-from pathlib import Path
 from device_modules.identity_manager import IdentityManager
 
 
