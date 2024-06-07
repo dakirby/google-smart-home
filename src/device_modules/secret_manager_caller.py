@@ -1,6 +1,7 @@
 from google.cloud import secretmanager
 from device_modules.identity_manager import IdentityManager
 import json
+from _version import __version__
 
 
 class SecretManagerCaller:
@@ -11,9 +12,6 @@ class SecretManagerCaller:
         self.client = secretmanager.SecretManagerServiceClient(
             credentials=self.user_id.creds
         )
-
-        # Private attributes
-        self._CURRENT_CFG_VERSION = "0.0.2"
 
     def create_secret(self, secret_id: str):
         """Creates a secret hosted on Google Secret Manager, which has a descriptive secret_id.
@@ -110,9 +108,9 @@ class SecretManagerCaller:
         Assumes the configuration file already exists as a client secret."""
 
         current_cfg = self.access_secret_version("cfg")
-        return current_cfg["version"] == self._CURRENT_CFG_VERSION
+        return current_cfg["version"] == __version__
 
-    def _create_or_update_cfg(self, create=False):
+    def _create_or_update_cfg(self):
         """Updates missing records in configuration file.
         Uploads the new configuration file as client secret.
 
@@ -123,9 +121,9 @@ class SecretManagerCaller:
             bool: True if successful
         """
         # Create new secret if cfg does not already exist
-        if create:
+        if not self._cfg_exists():
             self.create_secret("cfg")
-            self.add_secret_version("cfg", {"version": self._CURRENT_CFG_VERSION})
+            self.add_secret_version("cfg", {"version": __version__})
 
         # Access current cfg
         cfg = self.access_secret_version("cfg")
@@ -136,7 +134,7 @@ class SecretManagerCaller:
             cfg["lat"] = float(lat)
 
         # cfg version should now match _CURRENT_CFG_VERSION
-        cfg["version"] = self._CURRENT_CFG_VERSION
+        cfg["version"] = __version__
 
         # Upload new record to Google Secret Manager
         self.add_secret_version("cfg", cfg)
@@ -149,9 +147,7 @@ class SecretManagerCaller:
         Returns:
             Dict: configuration information stored as a dictionary.
         """
-        if not self._cfg_exists():
-            self.cfg = self._create_or_update_cfg(create=True)
-        elif not self._cfg_version_up_to_date():
+        if not self._cfg_exists() or not self._cfg_version_up_to_date():
             self.cfg = self._create_or_update_cfg()
         else:
             self.cfg = self.access_secret_version("cfg")
