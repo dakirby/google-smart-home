@@ -14,4 +14,5 @@
 
     5. A new page will open. Find the Calendar ID at the bottom under the Integrate Calendar section. The ID should be in the form `XXX@group.calendar.google.com`
 
-    6. Create a file called `calendar_id.json` in the project `src` folder and save the Calendar ID in the file as: `{"CALENDAR_ID": XXX@group.calendar.google.com"}`
+    6. Create a file called `calendar_id.json` in the project `src` folder and save the Calendar ID in the file as: `{"CALENDAR_ID": "XXX@group.calendar.google.com"}`
+5. [Enable the Gemini API](https://ai.google.dev/gemini-api/docs/quickstart?lang=python). Follow the instructions to get an API key. Create a JSON file called `google_ai_id.json` in the project `src` folder, and save the API key to this file as: `{"GOOGLE_AI_ID": "KEY_STRING"}`
