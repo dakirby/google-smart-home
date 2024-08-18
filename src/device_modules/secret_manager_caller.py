@@ -1,7 +1,7 @@
 from google.cloud import secretmanager
 from device_modules.identity_manager import IdentityManager
 import json
-from _version import __version__
+from configurations.config_dataclasses import UserCfg
 
 
 class SecretManagerCaller:
@@ -75,7 +75,7 @@ class SecretManagerCaller:
         """Accesses the API key or other credential stored in the secret on Google Secret Manager. Attempts to deserialize json string object before returning secret value.
         Args:
             secret_id (str): The secret's id
-            version_id (str, optional): Identifies which value of the secret to access. Defaults to "latest". #TODO: link to user's OAuth 2.0 credentials
+            version_id (str, optional): Identifies which value of the secret to access. Defaults to "latest".
         """
         # Build the resource name of the secret version.
         name = f"projects/{self.PROJECT_ID}/secrets/{secret_id}/versions/{version_id}"
@@ -105,10 +105,19 @@ class SecretManagerCaller:
 
     def _cfg_version_up_to_date(self):
         """Checks if current configuration file version is the latest configuration version.
-        Assumes the configuration file already exists as a client secret."""
+        Assumes the configuration file already exists as a client secret. Assumes every field in UserCfg is uniquely named."""
 
         current_cfg = self.access_secret_version("cfg")
-        return current_cfg["version"] == __version__
+        current_cfg_parameters = list(current_cfg.keys())
+        for param in current_cfg:
+            if type(param) is dict:
+                current_cfg_parameters += list(param.keys())
+        # Check if every cfg parameter exists
+        test = True
+        for a in UserCfg.list_cfg_parameters():
+            if a not in current_cfg_parameters:
+                test = False
+        return test
 
     def _create_or_update_cfg(self):
         """Updates missing records in configuration file.
@@ -119,26 +128,24 @@ class SecretManagerCaller:
 
         Returns:
             bool: True if successful
+
         """
         # Create new secret if cfg does not already exist
         if not self._cfg_exists():
             self.create_secret("cfg")
-            self.add_secret_version("cfg", {"version": __version__})
+            self.add_secret_version(
+                "cfg", {}
+            )  # this is needed to later check existing dict for missing values
 
         # Access current cfg
-        cfg = self.access_secret_version("cfg")
+        cfg_dict = self.access_secret_version("cfg")
 
-        # Check for missing records and update information
-        if "lat" not in cfg.keys():
-            lat = input("Enter your latitude: ")
-            cfg["lat"] = float(lat)
+        # Update cfg for any missing records
+        new_cfg_dict = UserCfg.update_cfg_dict(old_cfg_dict=cfg_dict)
 
-        # cfg version should now match _CURRENT_CFG_VERSION
-        cfg["version"] = __version__
-
-        # Upload new record to Google Secret Manager
-        self.add_secret_version("cfg", cfg)
-        return True
+        # Upload new record to Google Secret Manager and return UserCfg
+        self.add_secret_version("cfg", new_cfg_dict)
+        return UserCfg.from_dict(dict_obj=new_cfg_dict)
 
     def get_cfg(self):
         """Gets the configuration file stored on Google Secret Manager.
