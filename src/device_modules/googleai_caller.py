@@ -12,3 +12,9 @@ class GoogleAICaller:
     def get_response(self, prompt: str) -> str:
         response = self.model.generate_content(prompt)
         return response.text
+
+    @staticmethod
+    def get_new_workout():
+        """Placeholder for now
+        # TODO: generate new workout using AI"""
+        return "Some workout"

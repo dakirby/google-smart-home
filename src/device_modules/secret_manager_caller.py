@@ -147,7 +147,7 @@ class SecretManagerCaller:
         self.add_secret_version("cfg", new_cfg_dict)
         return UserCfg.from_dict(dict_obj=new_cfg_dict)
 
-    def get_cfg(self):
+    def get_cfg(self) -> UserCfg:
         """Gets the configuration file stored on Google Secret Manager.
         If the existing configuration file is not up to date, requests missing information from the user via the command line.
 
@@ -157,5 +157,5 @@ class SecretManagerCaller:
         if not self._cfg_exists() or not self._cfg_version_up_to_date():
             self.cfg = self._create_or_update_cfg()
         else:
-            self.cfg = self.access_secret_version("cfg")
+            self.cfg = UserCfg.from_dict(self.access_secret_version("cfg"))
         return self.cfg

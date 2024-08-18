@@ -17,28 +17,23 @@ def start_up(args: dict):
     from device_modules.secret_manager_caller import SecretManagerCaller
 
     smc = SecretManagerCaller(user_id=user_id)
-    smc.get_cfg()
+    usercfg = smc.get_cfg()
 
-    # Generate workout using generative AI
-    # Store workout as event in user's Google Calendar
+    # Check if workout event scheduled for today
+    from device_modules.googlecalendar_manager import GcalendarManager
+
+    gcm = GcalendarManager(user_id=user_id, usercfg=usercfg)
+    workout_scheduled_bool = gcm.check_for_workout()
+
+    # Generate workout using generative AI; store in calendar
+    if not workout_scheduled_bool:
+        from device_modules.googleai_caller import GoogleAICaller
+
+        workout_text = GoogleAICaller.get_new_workout()
+        gcm.create_workout_event(workout_text)
 
 
 def debug(args):
-    from device_modules.identity_manager import IdentityManager
-    from pathlib import Path
-    from device_modules.secret_manager_caller import SecretManagerCaller
-
-    credential_json_path = Path(__file__).parent / "credentials.json"
-    user_id = IdentityManager.google_oauth2_login(
-        credential_json_path=credential_json_path
-    )
-
-    smc = SecretManagerCaller(user_id=user_id)
-
-    # smc.create_secret("cfg")
-
-    # smc.add_secret_version("cfg", {"version": "0.0.1"})
-
-    smc.get_cfg()
+    start_up(args)
 
     pass
