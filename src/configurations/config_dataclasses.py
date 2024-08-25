@@ -20,6 +20,7 @@ class UserCfg:
     open_weather_cfg: OpenWeatherCfg
     google_calendar_cfg: GoogleCalendarCfg
     google_ai_cfg: GoogleAICfg
+    timezone_cfg: TimezoneCfg
     version: str
 
     @classmethod
@@ -27,10 +28,12 @@ class UserCfg:
         open_weather_cfg = OpenWeatherCfg(**dict_obj["open_weather_cfg"])
         google_calendar_cfg = GoogleCalendarCfg(**dict_obj["google_calendar_cfg"])
         google_ai_cfg = GoogleAICfg(**dict_obj["google_ai_cfg"])
+        timezone_cfg = TimezoneCfg(**dict_obj["timezone_cfg"])
         return cls(
             open_weather_cfg=open_weather_cfg,
             google_calendar_cfg=google_calendar_cfg,
             google_ai_cfg=google_ai_cfg,
+            timezone_cfg=timezone_cfg,
             version=dict_obj["version"],
         )
 
@@ -42,6 +45,8 @@ class UserCfg:
             return GoogleCalendarCfg.update_param_dict(args)
         elif dataclass_name == "GoogleAICfg":
             return GoogleAICfg.update_param_dict(args)
+        elif dataclass_name == "TimezoneCfg":
+            return TimezoneCfg.update_param_dict(args)
 
     @classmethod
     def list_cfg_parameters(cls) -> list:
@@ -185,6 +190,36 @@ class GoogleAICfg:
 
 
 @dataclass
+class TimezoneCfg:
+    timezone: str
+
+    def update_param_dict(old_dict: dict) -> dict:
+        """Generates a new dict with updated parameter values if any were missing from old_dict.
+
+        Args:
+            old_dict (dict): A dictionary of parameter values which may or may not contain values for the parameters needed to create an instance of this class.
+
+        Returns:
+            dict: An updated dict obj with missing parameter values now included.
+        """
+        param_dict_name = "timezone_cfg"
+
+        if param_dict_name not in old_dict.keys():
+            old_dict.update({param_dict_name: {}})
+        # User defined inputs:
+        if "timezone" not in old_dict[param_dict_name].keys():
+            timezone = input(
+                "Enter your timezone (allowable names are from https://data.iana.org/time-zones/tzdb-2021a/zone1970.tab): "
+            )
+            old_dict[param_dict_name].update({"timezone": timezone})
+
+        # JSON files
+        # None
+
+        return old_dict
+
+
+@dataclass
 class SenseMonitorCfg:
     """Unused for now"""
 
@@ -196,6 +231,7 @@ if __name__ == "__main__":
         "open_weather_cfg": {"lat": 54.533, "long": 54.423, "api_key": "key"},
         "google_calendar_cfg": {"calender_id": "some_id"},
         "google_ai_cfg": {"google_ai_id": "some_id"},
+        "timezone_cfg": {"timezone": "America/Regina"},
         "version": "0.0.1",
     }
     user_cfg = UserCfg.from_dict(dict_obj=dict_obj)

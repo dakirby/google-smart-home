@@ -85,10 +85,14 @@ class GcalendarManager:
         from googleapiclient.discovery import build
         import datetime
 
-        local_timezone = datetime.datetime.now().astimezone().tzinfo.__str__()
-        start_time = datetime.datetime.today().__str__()
-        end_time = datetime.datetime.today() + datetime.timedelta(seconds=3600)
-        end_time = end_time.__str__()
+        local_timezone = self.cfg.timezone_cfg.timezone  # Formatted as IANA timezone
+        start_time = datetime.datetime.now(
+            datetime.timezone.utc
+        ).isoformat()  # formatted according to RFC3339
+        end_time = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(
+            seconds=3600
+        )
+        end_time = end_time.isoformat()  # formatted according to RFC3339
 
         new_workout_event = {
             "summary": "WORKOUT",
@@ -108,6 +112,10 @@ class GcalendarManager:
 
         event = (
             gcalendar_service.events()
-            .insert(calendarId="primary", body=new_workout_event)
+            .insert(
+                calendarId=self.cfg.google_calendar_cfg.calender_id,
+                body=new_workout_event,
+            )
             .execute()
         )
+        print(event)
