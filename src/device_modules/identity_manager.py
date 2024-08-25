@@ -78,9 +78,9 @@ class IdentityManager:
     @staticmethod
     def _login_flow(credential_json_path: Path | str, token_json_path: Path | str):
         flow = InstalledAppFlow.from_client_secrets_file(
-            credential_json_path,
-            [
-                "https://www.googleapis.com/auth/calendar.readonly",
+            client_secrets_file=credential_json_path,
+            scopes=[
+                "https://www.googleapis.com/auth/calendar",
                 "https://www.googleapis.com/auth/cloud-platform",
             ],
         )
@@ -97,8 +97,7 @@ class IdentityManager:
         return secrets
 
     def _fetch_project_id(self):
-        # TODO: check credentials for project id
-        cloudproject_path = Path(__file__).parent.parent / "cloudproject.json"
-        with open(cloudproject_path, "r") as f:
+        credentials_path = Path(__file__).parent.parent / "credentials.json"
+        with open(credentials_path, "r") as f:
             data = json.load(f)
-        return data["PROJECT_ID"]
+        return data["installed"]["project_id"]

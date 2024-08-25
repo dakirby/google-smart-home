@@ -8,9 +8,9 @@
 
     2. Navigate to your `My calendars` list (usually bottom left side).
 
-    3. If you want to use a new calendar for this project, create a new calendar now.
+    3. Create a new calendar called `GoogleSmartHome`.
 
-    4. To get to your calendar settings, hover over the calendar you wish to use for this project and click the three vertical dots that appear to the right – this will bring up a dropdown menu, click `Settings and sharing`. 
+    4. To get to your calendar settings, hover over the `GoogleSmartHome` calendar and click the three vertical dots that appear to the right – this will bring up a dropdown menu, click `Settings and sharing`. 
 
     5. A new page will open. Find the Calendar ID at the bottom under the Integrate Calendar section. The ID should be in the form `XXX@group.calendar.google.com`
 
