@@ -29,7 +29,8 @@ def start_up(args: dict):
     if not workout_scheduled_bool:
         from device_modules.googleai_caller import GoogleAICaller
 
-        workout_text = GoogleAICaller.get_new_workout()
+        gai_caller = GoogleAICaller(usercfg=usercfg)
+        workout_text = gai_caller.get_new_workout()
         gcm.create_workout_event(workout_text)
 
 
