@@ -24,11 +24,15 @@ class GcalendarManager:
         for es in event_summaries:
             print(es)
 
-    def upcoming_events(self, n_events):
-        """Get upcoming events in Google calendar
+    def list_events(self, n_events, future=True):
+        """List events in Google Calendar. Can be either past events or future events (defaults to future events).
 
         Args:
-            n_events (int): the number of upcoming events to get
+            n_events (_type_): The maximum number of events to retrieve.
+            future (bool, optional): If True then lists upcoming events; if False then lists past events. Defaults to True.
+
+        Returns:
+            list: List of events
         """
         import datetime
         from googleapiclient.discovery import build
@@ -39,17 +43,30 @@ class GcalendarManager:
             datetime.datetime.now(datetime.UTC).isoformat()
         )  # online documentation uses deprecated datetime method; code updated
 
-        events_result = (
-            gcalendar_service.events()
-            .list(
-                calendarId=self.CALENDAR_ID,
-                timeMin=now,
-                maxResults=n_events,
-                singleEvents=True,
-                orderBy="startTime",
+        if future:
+            events_result = (
+                gcalendar_service.events()
+                .list(
+                    calendarId=self.CALENDAR_ID,
+                    timeMin=now,
+                    maxResults=n_events,
+                    singleEvents=True,
+                    orderBy="startTime",
+                )
+                .execute()
             )
-            .execute()
-        )
+        else:
+            events_result = (
+                gcalendar_service.events()
+                .list(
+                    calendarId=self.CALENDAR_ID,
+                    timeMax=now,
+                    maxResults=n_events,
+                    singleEvents=True,
+                    orderBy="startTime",
+                )
+                .execute()
+            )
         return events_result
 
     def check_for_workout(self, end_check_time: int = 24) -> bool:
@@ -63,7 +80,7 @@ class GcalendarManager:
         """
         import datetime
 
-        events_result = self.upcoming_events(
+        events_result = self.list_events(
             end_check_time * 2
         )  # Reasonable to guess that this is enough events to get.
         events = events_result.get("items", [])
@@ -80,6 +97,12 @@ class GcalendarManager:
                     if "WORKOUT" in event.get("summary"):
                         return True
         return False  # If True has not been returned, no workouts scheduled
+
+    def get_last_workout(self) -> str:
+        """Finds the last workout in the calendar and returns a description of the event."""
+        event_list = self.list_events(n_events=250, future=False)
+        event_dict = event_list.get("items", [])[-1]
+        return event_dict["description"]
 
     def create_workout_event(self, workout_info: str):
         from googleapiclient.discovery import build

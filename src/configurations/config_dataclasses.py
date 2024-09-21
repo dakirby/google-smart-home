@@ -22,6 +22,7 @@ class UserCfg:
     google_ai_cfg: GoogleAICfg
     timezone_cfg: TimezoneCfg
     version: str
+    baseline_weights_cfg: BaselineWeightsCfg
 
     @classmethod
     def from_dict(cls, dict_obj: dict) -> UserCfg:
@@ -29,12 +30,14 @@ class UserCfg:
         google_calendar_cfg = GoogleCalendarCfg(**dict_obj["google_calendar_cfg"])
         google_ai_cfg = GoogleAICfg(**dict_obj["google_ai_cfg"])
         timezone_cfg = TimezoneCfg(**dict_obj["timezone_cfg"])
+        baseline_weights_cfg = BaselineWeightsCfg(**dict_obj["baseline_weights_cfg"])
         return cls(
             open_weather_cfg=open_weather_cfg,
             google_calendar_cfg=google_calendar_cfg,
             google_ai_cfg=google_ai_cfg,
             timezone_cfg=timezone_cfg,
             version=dict_obj["version"],
+            baseline_weights_cfg=baseline_weights_cfg,
         )
 
     @staticmethod
@@ -47,6 +50,8 @@ class UserCfg:
             return GoogleAICfg.update_param_dict(args)
         elif dataclass_name == "TimezoneCfg":
             return TimezoneCfg.update_param_dict(args)
+        elif dataclass_name == "BaselineWeightsCfg":
+            return BaselineWeightsCfg.update_param_dict(args)
 
     @classmethod
     def list_cfg_parameters(cls) -> list:
@@ -226,15 +231,36 @@ class SenseMonitorCfg:
     token: str
 
 
-if __name__ == "__main__":
-    dict_obj = {
-        "open_weather_cfg": {"lat": 54.533, "long": 54.423, "api_key": "key"},
-        "google_calendar_cfg": {"calender_id": "some_id"},
-        "google_ai_cfg": {"google_ai_id": "some_id"},
-        "timezone_cfg": {"timezone": "America/Regina"},
-        "version": "0.0.1",
-    }
-    user_cfg = UserCfg.from_dict(dict_obj=dict_obj)
+@dataclass
+class BaselineWeightsCfg:
+    bp_weight: float  # Bench Press weight (kg)
+    sq_weight: float  # Squat weight (kg)
+    dl_weight: float  # Deadlift weight (kg)
 
-    print(user_cfg)
-    pass
+    def update_param_dict(old_dict: dict) -> dict:
+        """Generates a new dict with updated parameter values if any were missing from old_dict.
+
+        Args:
+            old_dict (dict): A dictionary of parameter values which may or may not contain values for the parameters needed to create an instance of this class.
+
+        Returns:
+            dict: An updated dict obj with missing parameter values now included.
+        """
+        param_dict_name = "baseline_weights_cfg"
+
+        if param_dict_name not in old_dict.keys():
+            old_dict.update({param_dict_name: {}})
+        # User defined inputs:
+        if "bp_weight" not in old_dict[param_dict_name].keys():
+            bp_weight = input("Enter your 80% Bench Press weight in kilograms: ")
+            old_dict[param_dict_name].update({"bp_weight": bp_weight})
+        if "sq_weight" not in old_dict[param_dict_name].keys():
+            sq_weight = input("Enter your 80% Squat weight in kilograms: ")
+            old_dict[param_dict_name].update({"sq_weight": sq_weight})
+        if "dl_weight" not in old_dict[param_dict_name].keys():
+            dl_weight = input("Enter your 80% Deadlift weight in kilograms: ")
+            old_dict[param_dict_name].update({"dl_weight": dl_weight})
+
+        # JSON files
+        #   None
+        return old_dict
